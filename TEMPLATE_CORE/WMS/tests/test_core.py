@@ -6,6 +6,7 @@ from wms_core.models import (
     Lot, Quant, Picking, PickingState, Move, MoveState,
 )
 from wms_core.utils.state_machine import transition
+from wms_core.utils.hierarchy import build_full_path, get_all_children
 
 
 def test_mixins_import():
@@ -25,6 +26,10 @@ def test_mixins_via_model(session):
     assert loc.active is True
     assert loc.name == "TestBin"
     assert loc.code is None
+
+
+def test_location_tablename():
+    assert Location.__tablename__ == "stock_location"
 
 
 def test_no_circular_imports():
@@ -51,6 +56,38 @@ def test_location_complete_name(session):
     session.expire_all()
     shelf_reloaded = session.get(Location, shelf.id)
     assert shelf_reloaded.complete_name == "WH/Stock/Shelf-A"
+
+
+def test_hierarchy_build_full_path(session):
+    root = Location(name="WH", location_type=LocationType.view)
+    child = Location(name="Stock", location_type=LocationType.internal)
+    session.add_all([root, child])
+    session.flush()
+    child.parent_id = root.id
+    session.flush()
+    session.expire_all()
+    child_r = session.get(Location, child.id)
+    assert build_full_path(child_r) == "WH/Stock"
+
+
+def test_hierarchy_get_all_children(session):
+    root = Location(name="Zone", location_type=LocationType.view)
+    c1 = Location(name="Aisle-1", location_type=LocationType.internal)
+    c2 = Location(name="Aisle-2", location_type=LocationType.internal)
+    gc1 = Location(name="Bin-01", location_type=LocationType.internal)
+    session.add_all([root, c1, c2, gc1])
+    session.flush()
+    c1.parent_id = root.id
+    c2.parent_id = root.id
+    gc1.parent_id = c1.id
+    session.flush()
+
+    descendants = get_all_children(root.id, session)
+    desc_ids = {d.id for d in descendants}
+    assert c1.id in desc_ids
+    assert c2.id in desc_ids
+    assert gc1.id in desc_ids   # grandchild included
+    assert root.id not in desc_ids
 
 
 def test_location_is_ancestor_of(session):
