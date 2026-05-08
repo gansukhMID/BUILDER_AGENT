@@ -28,7 +28,7 @@ class Move(Base, TimestampMixin):
     picking_id: Mapped[int | None] = mapped_column(
         ForeignKey("picking.id"), nullable=True
     )
-    product_id: Mapped[int] = mapped_column(ForeignKey("product.id"), nullable=False)
+    product_id: Mapped[int] = mapped_column(ForeignKey("product_product.id"), nullable=False)
     lot_id: Mapped[int | None] = mapped_column(ForeignKey("lot.id"), nullable=True)
     location_src_id: Mapped[int] = mapped_column(
         ForeignKey("stock_location.id"), nullable=False

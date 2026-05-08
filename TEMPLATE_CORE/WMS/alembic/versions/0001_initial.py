@@ -30,9 +30,9 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
     )
 
-    # 2. product
+    # 2. product_product
     op.create_table(
-        "product",
+        "product_product",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("name", sa.String, nullable=False),
         sa.Column("code", sa.String, nullable=True),
@@ -42,6 +42,10 @@ def upgrade() -> None:
             server_default="none",
         ),
         sa.Column("uom", sa.String, nullable=False, server_default="unit"),
+        sa.Column("can_be_sold", sa.Boolean, server_default=sa.true()),
+        sa.Column("can_be_purchased", sa.Boolean, server_default=sa.true()),
+        sa.Column("sale_price", sa.Float, nullable=True),
+        sa.Column("cost_price", sa.Float, nullable=True),
         sa.Column("active", sa.Boolean, server_default=sa.true()),
         sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
@@ -85,7 +89,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("name", sa.String, nullable=False),
         sa.Column("code", sa.String, nullable=True),
-        sa.Column("product_id", sa.Integer, sa.ForeignKey("product.id"), nullable=False),
+        sa.Column("product_id", sa.Integer, sa.ForeignKey("product_product.id"), nullable=False),
         sa.Column("ref", sa.String, nullable=True),
         sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
@@ -124,7 +128,7 @@ def upgrade() -> None:
     op.create_table(
         "quant",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("product_id", sa.Integer, sa.ForeignKey("product.id"), nullable=False),
+        sa.Column("product_id", sa.Integer, sa.ForeignKey("product_product.id"), nullable=False),
         sa.Column("location_id", sa.Integer, sa.ForeignKey("stock_location.id"), nullable=False),
         sa.Column("lot_id", sa.Integer, sa.ForeignKey("lot.id"), nullable=True),
         sa.Column("quantity", sa.Numeric(18, 6), server_default="0"),
@@ -170,7 +174,7 @@ def upgrade() -> None:
         "move",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("picking_id", sa.Integer, sa.ForeignKey("picking.id"), nullable=True),
-        sa.Column("product_id", sa.Integer, sa.ForeignKey("product.id"), nullable=False),
+        sa.Column("product_id", sa.Integer, sa.ForeignKey("product_product.id"), nullable=False),
         sa.Column("lot_id", sa.Integer, sa.ForeignKey("lot.id"), nullable=True),
         sa.Column(
             "location_src_id", sa.Integer, sa.ForeignKey("stock_location.id"), nullable=False
@@ -247,5 +251,5 @@ def downgrade() -> None:
     op.drop_constraint("fk_warehouse_input_loc", "stock_warehouse", type_="foreignkey")
     op.drop_constraint("fk_warehouse_lot_stock", "stock_warehouse", type_="foreignkey")
     op.drop_table("stock_location")
-    op.drop_table("product")
+    op.drop_table("product_product")
     op.drop_table("stock_warehouse")

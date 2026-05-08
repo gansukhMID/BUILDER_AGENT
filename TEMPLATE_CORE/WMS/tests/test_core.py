@@ -32,6 +32,23 @@ def test_location_tablename():
     assert Location.__tablename__ == "stock_location"
 
 
+def test_product_tablename_and_defaults(session):
+    from wms_core.models import Product, TrackingType
+    assert Product.__tablename__ == "product_product"
+    p = Product(name="Widget", uom="unit")
+    session.add(p)
+    session.flush()
+    assert p.tracking == TrackingType.none
+    assert p.uom == "unit"
+    assert p.can_be_sold is True
+    assert p.can_be_purchased is True
+    assert p.sale_price is None
+    assert p.cost_price is None
+    # no FK to location or warehouse
+    assert not hasattr(p, "location_id")
+    assert not hasattr(p, "warehouse_id")
+
+
 def test_warehouse_tablename_and_defaults(session):
     from wms_core.models import Warehouse
     assert Warehouse.__tablename__ == "stock_warehouse"
