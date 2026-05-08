@@ -32,12 +32,29 @@ def test_location_tablename():
     assert Location.__tablename__ == "stock_location"
 
 
+def test_warehouse_tablename_and_defaults(session):
+    from wms_core.models import Warehouse
+    assert Warehouse.__tablename__ == "stock_warehouse"
+    src = Location(name="WH-Stock", location_type=LocationType.internal)
+    session.add(src)
+    session.flush()
+    wh = Warehouse(name="Main Warehouse", lot_stock_id=src.id)
+    session.add(wh)
+    session.flush()
+    assert wh.id is not None
+    assert wh.reception_steps == "one_step"
+    assert wh.delivery_steps == "one_step"
+    assert wh.active is True
+    assert wh.wh_input_stock_loc_id is None
+    assert wh.wh_output_stock_loc_id is None
+
+
 def test_no_circular_imports():
     from wms_core.models import (
         Warehouse, Location, Product, Lot, Quant,
         PickingType, Picking, Move, StockRule, Package,
     )
-    assert Warehouse.__tablename__ == "warehouse"
+    assert Warehouse.__tablename__ == "stock_warehouse"
 
 
 def test_location_complete_name(session):

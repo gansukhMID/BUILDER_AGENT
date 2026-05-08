@@ -22,7 +22,7 @@ class PickingType(Base, TimestampMixin, ActiveMixin, NameMixin):
         Enum(OperationType, name="operation_type"), nullable=False
     )
     warehouse_id: Mapped[int | None] = mapped_column(
-        ForeignKey("warehouse.id"), nullable=True
+        ForeignKey("stock_warehouse.id"), nullable=True
     )
     default_location_src_id: Mapped[int | None] = mapped_column(
         ForeignKey("stock_location.id"), nullable=True

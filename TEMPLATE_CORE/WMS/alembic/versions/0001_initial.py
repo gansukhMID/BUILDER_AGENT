@@ -14,14 +14,17 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # 1. warehouse (no FK deps yet)
+    # 1. stock_warehouse (location FKs deferred — added after stock_location is created)
     op.create_table(
-        "warehouse",
+        "stock_warehouse",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("name", sa.String, nullable=False),
         sa.Column("code", sa.String, nullable=True),
-        sa.Column("short_name", sa.String, nullable=False),
-        sa.Column("lot_stock_id", sa.Integer, nullable=True),  # FK added below
+        sa.Column("lot_stock_id", sa.Integer, nullable=True),
+        sa.Column("wh_input_stock_loc_id", sa.Integer, nullable=True),
+        sa.Column("wh_output_stock_loc_id", sa.Integer, nullable=True),
+        sa.Column("reception_steps", sa.String, nullable=False, server_default="one_step"),
+        sa.Column("delivery_steps", sa.String, nullable=False, server_default="one_step"),
         sa.Column("active", sa.Boolean, server_default=sa.true()),
         sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
@@ -65,9 +68,15 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
     )
 
-    # Back-fill the deferred FK on warehouse
+    # Back-fill deferred FKs on stock_warehouse → stock_location
     op.create_foreign_key(
-        "fk_warehouse_lot_stock", "warehouse", "stock_location", ["lot_stock_id"], ["id"]
+        "fk_warehouse_lot_stock", "stock_warehouse", "stock_location", ["lot_stock_id"], ["id"]
+    )
+    op.create_foreign_key(
+        "fk_warehouse_input_loc", "stock_warehouse", "stock_location", ["wh_input_stock_loc_id"], ["id"]
+    )
+    op.create_foreign_key(
+        "fk_warehouse_output_loc", "stock_warehouse", "stock_location", ["wh_output_stock_loc_id"], ["id"]
     )
 
     # 4. lot
@@ -93,7 +102,7 @@ def upgrade() -> None:
             sa.Enum("incoming", "outgoing", "internal", name="operation_type"),
             nullable=False,
         ),
-        sa.Column("warehouse_id", sa.Integer, sa.ForeignKey("warehouse.id"), nullable=True),
+        sa.Column("warehouse_id", sa.Integer, sa.ForeignKey("stock_warehouse.id"), nullable=True),
         sa.Column(
             "default_location_src_id",
             sa.Integer,
@@ -234,7 +243,9 @@ def downgrade() -> None:
     op.drop_table("quant")
     op.drop_table("picking_type")
     op.drop_table("lot")
-    op.drop_constraint("fk_warehouse_lot_stock", "warehouse", type_="foreignkey")
+    op.drop_constraint("fk_warehouse_output_loc", "stock_warehouse", type_="foreignkey")
+    op.drop_constraint("fk_warehouse_input_loc", "stock_warehouse", type_="foreignkey")
+    op.drop_constraint("fk_warehouse_lot_stock", "stock_warehouse", type_="foreignkey")
     op.drop_table("stock_location")
     op.drop_table("product")
-    op.drop_table("warehouse")
+    op.drop_table("stock_warehouse")
