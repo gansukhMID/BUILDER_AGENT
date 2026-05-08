@@ -20,7 +20,7 @@ class Quant(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("product_product.id"), nullable=False)
     location_id: Mapped[int] = mapped_column(ForeignKey("stock_location.id"), nullable=False)
-    lot_id: Mapped[int | None] = mapped_column(ForeignKey("lot.id"), nullable=True)
+    lot_id: Mapped[int | None] = mapped_column(ForeignKey("stock_lot.id"), nullable=True)
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
     reserved_quantity: Mapped[Decimal] = mapped_column(
         Numeric(18, 6), default=Decimal("0")

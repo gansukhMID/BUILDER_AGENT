@@ -49,6 +49,28 @@ def test_product_tablename_and_defaults(session):
     assert not hasattr(p, "warehouse_id")
 
 
+def test_lot_tablename_fk_and_unique(session):
+    from wms_core.models import Lot
+    import sqlalchemy.exc
+    assert Lot.__tablename__ == "stock_lot"
+    product = Product(name="Part-A", uom="unit")
+    session.add(product)
+    session.flush()
+
+    lot = Lot(name="LOT-001", product_id=product.id)
+    session.add(lot)
+    session.flush()
+    assert lot.id is not None
+    assert lot.product.name == "Part-A"   # relationship loads
+    assert product.lots[0].name == "LOT-001"  # back_populates works
+
+    # Duplicate (name, product_id) must raise
+    session.add(Lot(name="LOT-001", product_id=product.id))
+    with pytest.raises(sqlalchemy.exc.IntegrityError):
+        session.flush()
+    session.rollback()
+
+
 def test_warehouse_tablename_and_defaults(session):
     from wms_core.models import Warehouse
     assert Warehouse.__tablename__ == "stock_warehouse"

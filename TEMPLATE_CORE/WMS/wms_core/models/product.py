@@ -1,8 +1,13 @@
+from __future__ import annotations
 import enum
+from typing import TYPE_CHECKING
 from sqlalchemy import Enum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from wms_core.db import Base
 from wms_core.mixins import TimestampMixin, ActiveMixin, NameMixin
+
+if TYPE_CHECKING:
+    from wms_core.models.lot import Lot
 
 
 class TrackingType(str, enum.Enum):
@@ -25,3 +30,5 @@ class Product(Base, TimestampMixin, ActiveMixin, NameMixin):
     can_be_purchased: Mapped[bool] = mapped_column(default=True)
     sale_price: Mapped[float | None] = mapped_column(nullable=True)
     cost_price: Mapped[float | None] = mapped_column(nullable=True)
+
+    lots: Mapped[list[Lot]] = relationship("Lot", back_populates="product")

@@ -83,16 +83,19 @@ def upgrade() -> None:
         "fk_warehouse_output_loc", "stock_warehouse", "stock_location", ["wh_output_stock_loc_id"], ["id"]
     )
 
-    # 4. lot
+    # 4. stock_lot
     op.create_table(
-        "lot",
+        "stock_lot",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("name", sa.String, nullable=False),
         sa.Column("code", sa.String, nullable=True),
         sa.Column("product_id", sa.Integer, sa.ForeignKey("product_product.id"), nullable=False),
         sa.Column("ref", sa.String, nullable=True),
+        sa.Column("expiration_date", sa.DateTime, nullable=True),
+        sa.Column("active", sa.Boolean, server_default=sa.true()),
         sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+        sa.UniqueConstraint("name", "product_id", name="uq_lot_name_product"),
     )
 
     # 5. picking_type
@@ -130,7 +133,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("product_id", sa.Integer, sa.ForeignKey("product_product.id"), nullable=False),
         sa.Column("location_id", sa.Integer, sa.ForeignKey("stock_location.id"), nullable=False),
-        sa.Column("lot_id", sa.Integer, sa.ForeignKey("lot.id"), nullable=True),
+        sa.Column("lot_id", sa.Integer, sa.ForeignKey("stock_lot.id"), nullable=True),
         sa.Column("quantity", sa.Numeric(18, 6), server_default="0"),
         sa.Column("reserved_quantity", sa.Numeric(18, 6), server_default="0"),
         sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
@@ -175,7 +178,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("picking_id", sa.Integer, sa.ForeignKey("picking.id"), nullable=True),
         sa.Column("product_id", sa.Integer, sa.ForeignKey("product_product.id"), nullable=False),
-        sa.Column("lot_id", sa.Integer, sa.ForeignKey("lot.id"), nullable=True),
+        sa.Column("lot_id", sa.Integer, sa.ForeignKey("stock_lot.id"), nullable=True),
         sa.Column(
             "location_src_id", sa.Integer, sa.ForeignKey("stock_location.id"), nullable=False
         ),
@@ -246,7 +249,7 @@ def downgrade() -> None:
     op.drop_table("picking")
     op.drop_table("quant")
     op.drop_table("picking_type")
-    op.drop_table("lot")
+    op.drop_table("stock_lot")
     op.drop_constraint("fk_warehouse_output_loc", "stock_warehouse", type_="foreignkey")
     op.drop_constraint("fk_warehouse_input_loc", "stock_warehouse", type_="foreignkey")
     op.drop_constraint("fk_warehouse_lot_stock", "stock_warehouse", type_="foreignkey")
