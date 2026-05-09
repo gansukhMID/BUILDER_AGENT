@@ -31,7 +31,7 @@ class Picking(Base, TimestampMixin, ActiveMixin):
         Enum(PickingState, name="picking_state"), default=PickingState.draft
     )
     picking_type_id: Mapped[int | None] = mapped_column(
-        ForeignKey("picking_type.id"), nullable=True
+        ForeignKey("stock_picking_type.id"), nullable=True
     )
     location_src_id: Mapped[int | None] = mapped_column(
         ForeignKey("stock_location.id"), nullable=True

@@ -28,6 +28,6 @@ class StockRule(Base, TimestampMixin, ActiveMixin, NameMixin):
         ForeignKey("stock_location.id"), nullable=False
     )
     picking_type_id: Mapped[int | None] = mapped_column(
-        ForeignKey("picking_type.id"), nullable=True
+        ForeignKey("stock_picking_type.id"), nullable=True
     )
     delay: Mapped[int] = mapped_column(default=0)

@@ -98,9 +98,9 @@ def upgrade() -> None:
         sa.UniqueConstraint("name", "product_id", name="uq_lot_name_product"),
     )
 
-    # 5. picking_type
+    # 5. stock_picking_type
     op.create_table(
-        "picking_type",
+        "stock_picking_type",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("name", sa.String, nullable=False),
         sa.Column("code", sa.String, nullable=True),
@@ -122,6 +122,8 @@ def upgrade() -> None:
             sa.ForeignKey("stock_location.id"),
             nullable=True,
         ),
+        sa.Column("sequence_prefix", sa.String, nullable=True),
+        sa.Column("count_picking_ready", sa.Integer, server_default="0"),
         sa.Column("active", sa.Boolean, server_default=sa.true()),
         sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
@@ -157,7 +159,7 @@ def upgrade() -> None:
         sa.Column(
             "picking_type_id",
             sa.Integer,
-            sa.ForeignKey("picking_type.id"),
+            sa.ForeignKey("stock_picking_type.id"),
             nullable=True,
         ),
         sa.Column(
@@ -219,7 +221,7 @@ def upgrade() -> None:
         sa.Column(
             "picking_type_id",
             sa.Integer,
-            sa.ForeignKey("picking_type.id"),
+            sa.ForeignKey("stock_picking_type.id"),
             nullable=True,
         ),
         sa.Column("delay", sa.Integer, server_default="0"),
@@ -248,7 +250,7 @@ def downgrade() -> None:
     op.drop_table("move")
     op.drop_table("picking")
     op.drop_table("stock_quant")
-    op.drop_table("picking_type")
+    op.drop_table("stock_picking_type")
     op.drop_table("stock_lot")
     op.drop_constraint("fk_warehouse_output_loc", "stock_warehouse", type_="foreignkey")
     op.drop_constraint("fk_warehouse_input_loc", "stock_warehouse", type_="foreignkey")

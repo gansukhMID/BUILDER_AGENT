@@ -96,6 +96,32 @@ def test_no_circular_imports():
     assert Warehouse.__tablename__ == "stock_warehouse"
 
 
+def test_picking_type_tablename_and_relationships(session):
+    from wms_core.models import PickingType, OperationType
+    assert PickingType.__tablename__ == "stock_picking_type"
+
+    src = Location(name="Input", location_type=LocationType.internal)
+    dest = Location(name="Stock", location_type=LocationType.internal)
+    session.add_all([src, dest])
+    session.flush()
+
+    pt = PickingType(
+        name="Receipts",
+        operation_type=OperationType.incoming,
+        default_location_src_id=src.id,
+        default_location_dest_id=dest.id,
+    )
+    session.add(pt)
+    session.flush()
+
+    session.expire(pt)
+    assert pt.warehouse_id is None          # nullable FK
+    assert pt.count_picking_ready == 0
+    assert pt.default_src_location.name == "Input"
+    assert pt.default_dest_location.name == "Stock"
+    assert pt.operation_type in (OperationType.incoming, "incoming")
+
+
 def test_location_complete_name(session):
     root = Location(name="WH", location_type=LocationType.view)
     stock = Location(name="Stock", location_type=LocationType.internal)
