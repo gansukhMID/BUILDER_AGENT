@@ -164,6 +164,58 @@ def test_location_is_ancestor_of(session):
     assert child_r.is_ancestor_of(parent_r) is False
 
 
+def test_quant_tablename_and_relationships(session):
+    assert Quant.__tablename__ == "stock_quant"
+    product = Product(name="Gadget", uom="unit")
+    loc = Location(name="Shelf-Q", location_type=LocationType.internal)
+    session.add_all([product, loc])
+    session.flush()
+    q = Quant.add_quantity(session, product.id, loc.id, Decimal("5"))
+    session.flush()
+    session.expire(q)
+    assert q.product.name == "Gadget"
+    assert q.location.name == "Shelf-Q"
+    assert q.lot is None
+
+
+def test_quant_add_quantity_idempotent(session):
+    """Two add_quantity calls → single quant with summed qty."""
+    product = Product(name="Sprocket", uom="unit")
+    loc = Location(name="Bin-S", location_type=LocationType.internal)
+    session.add_all([product, loc])
+    session.flush()
+    Quant.add_quantity(session, product.id, loc.id, Decimal("3"))
+    Quant.add_quantity(session, product.id, loc.id, Decimal("7"))
+    session.flush()
+    quants = session.execute(
+        __import__("sqlalchemy").select(Quant).where(
+            Quant.product_id == product.id, Quant.location_id == loc.id
+        )
+    ).scalars().all()
+    assert len(quants) == 1
+    assert quants[0].quantity == Decimal("10")
+
+
+def test_quant_get_available_zero_when_missing(session):
+    product = Product(name="Ghost", uom="unit")
+    loc = Location(name="Empty-Bin", location_type=LocationType.internal)
+    session.add_all([product, loc])
+    session.flush()
+    assert Quant.get_available(session, product.id, loc.id) == Decimal("0")
+
+
+def test_quant_get_available_minus_reserved(session):
+    product = Product(name="Reserve-Part", uom="unit")
+    loc = Location(name="Reserve-Bin", location_type=LocationType.internal)
+    session.add_all([product, loc])
+    session.flush()
+    q = Quant.add_quantity(session, product.id, loc.id, Decimal("10"))
+    session.flush()
+    q.reserved_quantity = Decimal("3")
+    session.flush()
+    assert Quant.get_available(session, product.id, loc.id) == Decimal("7")
+
+
 def test_quant_add_and_get_available(session):
     product = Product(name="Widget", uom="unit", tracking=TrackingType.none)
     supplier_loc = Location(name="Supplier", location_type=LocationType.supplier)

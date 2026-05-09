@@ -1,9 +1,15 @@
 from __future__ import annotations
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, Numeric, UniqueConstraint, select
-from sqlalchemy.orm import Mapped, mapped_column, Session
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 from wms_core.db import Base
 from wms_core.mixins import TimestampMixin
+
+if TYPE_CHECKING:
+    from wms_core.models.location import Location
+    from wms_core.models.lot import Lot
+    from wms_core.models.product import Product
 
 
 class Quant(Base, TimestampMixin):
@@ -12,7 +18,7 @@ class Quant(Base, TimestampMixin):
     Single source of truth: (product, location, lot) → quantity.
     """
 
-    __tablename__ = "quant"
+    __tablename__ = "stock_quant"
     __table_args__ = (
         UniqueConstraint("product_id", "location_id", "lot_id", name="uq_quant_key"),
     )
@@ -22,9 +28,11 @@ class Quant(Base, TimestampMixin):
     location_id: Mapped[int] = mapped_column(ForeignKey("stock_location.id"), nullable=False)
     lot_id: Mapped[int | None] = mapped_column(ForeignKey("stock_lot.id"), nullable=True)
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
-    reserved_quantity: Mapped[Decimal] = mapped_column(
-        Numeric(18, 6), default=Decimal("0")
-    )
+    reserved_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+
+    product: Mapped[Product] = relationship("Product")
+    location: Mapped[Location] = relationship("Location")
+    lot: Mapped[Lot | None] = relationship("Lot")
 
     @classmethod
     def add_quantity(
@@ -62,14 +70,16 @@ class Quant(Base, TimestampMixin):
         session: Session,
         product_id: int,
         location_id: int,
+        lot_id: int | None = None,
     ) -> Decimal:
-        """Sum of (quantity - reserved_quantity) across all lots at this location."""
-        rows = session.execute(
-            select(cls).where(
-                cls.product_id == product_id,
-                cls.location_id == location_id,
-            )
-        ).scalars().all()
+        """Return quantity - reserved_quantity for the matching quant (0 if none exists)."""
+        stmt = select(cls).where(
+            cls.product_id == product_id,
+            cls.location_id == location_id,
+        )
+        if lot_id is not None:
+            stmt = stmt.where(cls.lot_id == lot_id)
+        rows = session.execute(stmt).scalars().all()
         return sum(
             (q.quantity - q.reserved_quantity for q in rows), Decimal("0")
         )

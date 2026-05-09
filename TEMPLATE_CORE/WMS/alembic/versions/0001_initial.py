@@ -129,7 +129,7 @@ def upgrade() -> None:
 
     # 6. quant
     op.create_table(
-        "quant",
+        "stock_quant",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("product_id", sa.Integer, sa.ForeignKey("product_product.id"), nullable=False),
         sa.Column("location_id", sa.Integer, sa.ForeignKey("stock_location.id"), nullable=False),
@@ -247,7 +247,7 @@ def downgrade() -> None:
     op.drop_table("stock_rule")
     op.drop_table("move")
     op.drop_table("picking")
-    op.drop_table("quant")
+    op.drop_table("stock_quant")
     op.drop_table("picking_type")
     op.drop_table("stock_lot")
     op.drop_constraint("fk_warehouse_output_loc", "stock_warehouse", type_="foreignkey")
