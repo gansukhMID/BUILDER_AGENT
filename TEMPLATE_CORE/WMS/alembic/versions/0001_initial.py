@@ -143,11 +143,12 @@ def upgrade() -> None:
         sa.UniqueConstraint("product_id", "location_id", "lot_id", name="uq_quant_key"),
     )
 
-    # 7. picking
+    # 7. stock_picking
     op.create_table(
-        "picking",
+        "stock_picking",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("name", sa.String, nullable=False),
+        sa.Column("code", sa.String, nullable=True),
         sa.Column(
             "state",
             sa.Enum(
@@ -168,17 +169,19 @@ def upgrade() -> None:
         sa.Column(
             "location_dest_id", sa.Integer, sa.ForeignKey("stock_location.id"), nullable=True
         ),
+        sa.Column("partner_id", sa.Integer, nullable=True),
+        sa.Column("origin", sa.String, nullable=True),
         sa.Column("scheduled_date", sa.DateTime, nullable=True),
         sa.Column("active", sa.Boolean, server_default=sa.true()),
         sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
     )
 
-    # 8. move
+    # 8. stock_move
     op.create_table(
-        "move",
+        "stock_move",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("picking_id", sa.Integer, sa.ForeignKey("picking.id"), nullable=True),
+        sa.Column("picking_id", sa.Integer, sa.ForeignKey("stock_picking.id"), nullable=True),
         sa.Column("product_id", sa.Integer, sa.ForeignKey("product_product.id"), nullable=False),
         sa.Column("lot_id", sa.Integer, sa.ForeignKey("stock_lot.id"), nullable=True),
         sa.Column(
@@ -247,8 +250,8 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table("package")
     op.drop_table("stock_rule")
-    op.drop_table("move")
-    op.drop_table("picking")
+    op.drop_table("stock_move")
+    op.drop_table("stock_picking")
     op.drop_table("stock_quant")
     op.drop_table("stock_picking_type")
     op.drop_table("stock_lot")

@@ -22,11 +22,11 @@ class MoveState(str, enum.Enum):
 class Move(Base, TimestampMixin):
     """Planned movement of product between locations. Analogous to stock.move in Odoo."""
 
-    __tablename__ = "move"
+    __tablename__ = "stock_move"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     picking_id: Mapped[int | None] = mapped_column(
-        ForeignKey("picking.id"), nullable=True
+        ForeignKey("stock_picking.id"), nullable=True
     )
     product_id: Mapped[int] = mapped_column(ForeignKey("product_product.id"), nullable=False)
     lot_id: Mapped[int | None] = mapped_column(ForeignKey("stock_lot.id"), nullable=True)

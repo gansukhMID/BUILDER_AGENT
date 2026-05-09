@@ -5,7 +5,7 @@ from wms_core.models import (
     Location, LocationType, Product, TrackingType,
     Lot, Quant, Picking, PickingState, Move, MoveState,
 )
-from wms_core.utils.state_machine import transition
+from wms_core.utils.state_machine import transition, InvalidTransition
 from wms_core.utils.hierarchy import build_full_path, get_all_children
 
 
@@ -291,8 +291,7 @@ def test_picking_state_machine_valid(session):
     picking.confirm()
     assert picking.state == PickingState.confirmed
 
-    # Manually advance to in_progress before validate
-    picking.state = PickingState(transition(picking.state.value, "in_progress"))
+    picking.start()
     picking.validate()
     assert picking.state == PickingState.done
 
@@ -300,8 +299,29 @@ def test_picking_state_machine_valid(session):
 def test_picking_state_machine_invalid():
     picking = Picking(name="WH/IN/001")
     picking.state = PickingState.done
-    with pytest.raises(ValueError):
+    with pytest.raises(InvalidTransition):
         picking.cancel()
+
+
+def test_picking_start_method(session):
+    product = Product(name="StartPart", uom="unit")
+    src = Location(name="SrcStart", location_type=LocationType.internal)
+    dest = Location(name="DestStart", location_type=LocationType.internal)
+    session.add_all([product, src, dest])
+    session.flush()
+
+    picking = Picking(name="WH/START/001", location_src_id=src.id, location_dest_id=dest.id)
+    session.add(picking)
+    session.flush()
+
+    picking.confirm()
+    assert picking.state == PickingState.confirmed
+    picking.start()
+    assert picking.state == PickingState.in_progress
+
+
+def test_picking_tablename():
+    assert Picking.__tablename__ == "stock_picking"
 
 
 def test_move_links_to_picking(session):

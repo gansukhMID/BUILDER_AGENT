@@ -5,11 +5,13 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from wms_core.db import Base
-from wms_core.mixins import TimestampMixin, ActiveMixin
-from wms_core.utils.state_machine import transition
+from wms_core.mixins import TimestampMixin, ActiveMixin, NameMixin
+from wms_core.utils.state_machine import StateMachine, InvalidTransition, PICKING_TRANSITIONS
 
 if TYPE_CHECKING:
     from wms_core.models.move import Move
+    from wms_core.models.location import Location
+    from wms_core.models.picking_type import PickingType
 
 
 class PickingState(str, enum.Enum):
@@ -20,13 +22,15 @@ class PickingState(str, enum.Enum):
     cancelled = "cancelled"
 
 
-class Picking(Base, TimestampMixin, ActiveMixin):
+_fsm = StateMachine(PICKING_TRANSITIONS)
+
+
+class Picking(Base, TimestampMixin, ActiveMixin, NameMixin):
     """Transfer operation header. Analogous to stock.picking in Odoo."""
 
-    __tablename__ = "picking"
+    __tablename__ = "stock_picking"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(nullable=False)
     state: Mapped[PickingState] = mapped_column(
         Enum(PickingState, name="picking_state"), default=PickingState.draft
     )
@@ -39,16 +43,30 @@ class Picking(Base, TimestampMixin, ActiveMixin):
     location_dest_id: Mapped[int | None] = mapped_column(
         ForeignKey("stock_location.id"), nullable=True
     )
+    partner_id: Mapped[int | None] = mapped_column(nullable=True)
+    origin: Mapped[str | None] = mapped_column(nullable=True)
     scheduled_date: Mapped[datetime | None] = mapped_column(nullable=True)
 
     moves: Mapped[list[Move]] = relationship("Move", back_populates="picking")
+    picking_type: Mapped[PickingType | None] = relationship(
+        "PickingType", foreign_keys=[picking_type_id]
+    )
+    src_location: Mapped[Location | None] = relationship(
+        "Location", foreign_keys=[location_src_id]
+    )
+    dest_location: Mapped[Location | None] = relationship(
+        "Location", foreign_keys=[location_dest_id]
+    )
 
     def confirm(self) -> None:
-        self.state = PickingState(transition(self.state.value, "confirmed"))
+        _fsm.apply(self, "state", PickingState.confirmed)
+
+    def start(self) -> None:
+        _fsm.apply(self, "state", PickingState.in_progress)
 
     def validate(self) -> None:
         """Move quants and mark done. Override in subclasses to add quant logic."""
-        self.state = PickingState(transition(self.state.value, "done"))
+        _fsm.apply(self, "state", PickingState.done)
 
     def cancel(self) -> None:
-        self.state = PickingState(transition(self.state.value, "cancelled"))
+        _fsm.apply(self, "state", PickingState.cancelled)
