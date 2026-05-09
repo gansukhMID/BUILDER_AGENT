@@ -4,7 +4,9 @@ from wms_core.mixins import TimestampMixin, ActiveMixin, NameMixin
 from wms_core.models import (
     Location, LocationType, Product, TrackingType,
     Lot, Quant, Picking, PickingState, Move, MoveState,
+    StockRule, Package,
 )
+from wms_core.models.stock_rule import RuleAction, ProcureMethod, RuleAuto
 from wms_core.utils.state_machine import transition, InvalidTransition
 from wms_core.utils.hierarchy import build_full_path, get_all_children
 
@@ -349,3 +351,115 @@ def test_move_links_to_picking(session):
     picking_r = session.get(Picking, picking.id)
     assert len(picking_r.moves) == 1
     assert picking_r.moves[0].product_qty == Decimal("3")
+
+
+def test_move_validate_updates_quants(session):
+    """Move.validate(session) should decrement src and increment dest quants."""
+    product = Product(name="ValidatePart", uom="unit")
+    src = Location(name="SrcV", location_type=LocationType.internal)
+    dest = Location(name="DestV", location_type=LocationType.internal)
+    session.add_all([product, src, dest])
+    session.flush()
+
+    # Seed 10 units at src
+    Quant.add_quantity(session, product.id, src.id, Decimal("10"))
+    session.flush()
+
+    move = Move(
+        product_id=product.id,
+        location_src_id=src.id,
+        location_dest_id=dest.id,
+        product_qty=Decimal("4"),
+    )
+    session.add(move)
+    session.flush()
+
+    move.validate(session)
+    session.flush()
+
+    assert move.state == MoveState.done
+    assert move.qty_done == Decimal("4")
+    assert Quant.get_available(session, product.id, src.id) == Decimal("6")
+    assert Quant.get_available(session, product.id, dest.id) == Decimal("4")
+
+
+def test_move_tablename():
+    assert Move.__tablename__ == "stock_move"
+
+
+def test_move_relationships(session):
+    product = Product(name="RelPart", uom="unit")
+    src = Location(name="SrcR", location_type=LocationType.internal)
+    dest = Location(name="DestR", location_type=LocationType.internal)
+    session.add_all([product, src, dest])
+    session.flush()
+
+    move = Move(
+        product_id=product.id,
+        location_src_id=src.id,
+        location_dest_id=dest.id,
+        product_qty=Decimal("1"),
+    )
+    session.add(move)
+    session.flush()
+    session.expire(move)
+
+    assert move.product.name == "RelPart"
+    assert move.src_location.name == "SrcR"
+    assert move.dest_location.name == "DestR"
+    assert move.lot is None
+
+
+def test_stock_rule_tablename_and_defaults(session):
+    src = Location(name="RuleSrc", location_type=LocationType.internal)
+    dest = Location(name="RuleDest", location_type=LocationType.internal)
+    session.add_all([src, dest])
+    session.flush()
+
+    rule = StockRule(
+        name="Auto-replenish",
+        action=RuleAction.pull,
+        location_dest_id=dest.id,
+    )
+    session.add(rule)
+    session.flush()
+
+    assert StockRule.__tablename__ == "stock_rule"
+    assert rule.action == RuleAction.pull
+    assert rule.procure_method == ProcureMethod.make_to_stock
+    assert rule.auto == RuleAuto.manual
+    assert rule.delay == 0
+    assert rule.warehouse_id is None
+
+
+def test_package_tablename():
+    assert Package.__tablename__ == "stock_quant_package"
+
+
+def test_package_create(session):
+    loc = Location(name="PkgBin", location_type=LocationType.internal)
+    session.add(loc)
+    session.flush()
+
+    pkg = Package(name="PKG-001", location_id=loc.id)
+    session.add(pkg)
+    session.flush()
+    assert pkg.id is not None
+    assert pkg.name == "PKG-001"
+
+
+def test_state_machine_can():
+    from wms_core.utils.state_machine import StateMachine, PICKING_TRANSITIONS
+    fsm = StateMachine(PICKING_TRANSITIONS)
+    assert fsm.can("draft", "confirmed") is True
+    assert fsm.can("draft", "done") is False
+    assert fsm.can("done", "cancelled") is False
+
+
+def test_no_circular_imports_full():
+    from wms_core.models import (
+        Warehouse, Location, Product, Lot, Quant,
+        PickingType, Picking, Move, StockRule, Package,
+    )
+    assert StockRule.__tablename__ == "stock_rule"
+    assert Package.__tablename__ == "stock_quant_package"

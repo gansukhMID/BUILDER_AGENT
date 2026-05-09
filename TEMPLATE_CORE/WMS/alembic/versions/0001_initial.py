@@ -216,6 +216,16 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column(
+            "procure_method",
+            sa.Enum("make_to_stock", "make_to_order", name="procure_method"),
+            server_default="make_to_stock",
+        ),
+        sa.Column(
+            "auto",
+            sa.Enum("manual", "transparent", name="rule_auto"),
+            server_default="manual",
+        ),
+        sa.Column(
             "location_src_id", sa.Integer, sa.ForeignKey("stock_location.id"), nullable=True
         ),
         sa.Column(
@@ -227,15 +237,21 @@ def upgrade() -> None:
             sa.ForeignKey("stock_picking_type.id"),
             nullable=True,
         ),
+        sa.Column(
+            "warehouse_id",
+            sa.Integer,
+            sa.ForeignKey("stock_warehouse.id"),
+            nullable=True,
+        ),
         sa.Column("delay", sa.Integer, server_default="0"),
         sa.Column("active", sa.Boolean, server_default=sa.true()),
         sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
     )
 
-    # 10. package
+    # 10. stock_quant_package
     op.create_table(
-        "package",
+        "stock_quant_package",
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("name", sa.String, nullable=False),
         sa.Column("code", sa.String, nullable=True),
@@ -248,7 +264,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table("package")
+    op.drop_table("stock_quant_package")
     op.drop_table("stock_rule")
     op.drop_table("stock_move")
     op.drop_table("stock_picking")

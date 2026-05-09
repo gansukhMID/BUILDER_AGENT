@@ -8,7 +8,7 @@ from wms_core.mixins import TimestampMixin, NameMixin
 class Package(Base, TimestampMixin, NameMixin):
     """Packaging unit stub. Extend to add barcode, weight, package type."""
 
-    __tablename__ = "package"
+    __tablename__ = "stock_quant_package"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     location_id: Mapped[int | None] = mapped_column(
