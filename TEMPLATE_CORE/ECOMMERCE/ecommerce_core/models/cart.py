@@ -40,7 +40,7 @@ class Cart(Base, TimestampMixin):
             if line.variant_id == variant.id:
                 line.qty += qty
                 return line
-        new_line = CartLine(cart=self, variant_id=variant.id, qty=qty)
+        new_line = CartLine(variant_id=variant.id, qty=qty)
         self.lines.append(new_line)
         return new_line
 
