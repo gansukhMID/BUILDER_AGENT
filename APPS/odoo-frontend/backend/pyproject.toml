@@ -30,4 +30,4 @@ where = ["."]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=. --cov-report=term-missing --cov-omit=tests/*,alembic/*"
+addopts = "--cov=. --cov-report=term-missing"
