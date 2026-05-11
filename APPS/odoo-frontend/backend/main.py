@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from db import get_db
-from routers import auth, wms, ecommerce, users
+from routers import auth, wms, ecommerce, users, store
 
 app = FastAPI(
     title="Odoo Frontend API",
@@ -24,6 +24,7 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(wms.router, prefix="/wms", tags=["wms"])
 app.include_router(ecommerce.router, prefix="/ecommerce", tags=["ecommerce"])
 app.include_router(users.router, prefix="/users", tags=["users"])
+app.include_router(store.router, prefix="/store", tags=["store"])
 
 
 @app.get("/health", tags=["system"])
