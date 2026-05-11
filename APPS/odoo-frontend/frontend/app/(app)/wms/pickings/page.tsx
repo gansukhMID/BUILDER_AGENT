@@ -24,7 +24,12 @@ export default async function PickingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Pickings</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Pickings</h1>
+        <Link href="/wms/pickings/new" className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
+          + New Picking
+        </Link>
+      </div>
       <div className="bg-white rounded-lg border border-gray-200">
         <DataTable
           columns={[

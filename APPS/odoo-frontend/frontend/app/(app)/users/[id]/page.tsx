@@ -83,9 +83,15 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between">
         <Link href="/users" className="text-blue-600 hover:underline text-sm">
           ← Back to Users
+        </Link>
+        <Link
+          href={`/users/${id}/edit`}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50"
+        >
+          Edit User
         </Link>
       </div>
 

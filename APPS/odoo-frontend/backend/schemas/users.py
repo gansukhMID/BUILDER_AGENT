@@ -66,3 +66,38 @@ class UserOrderOut(BaseModel):
     state: str
     total_amount: Optional[Decimal]
     created_at: datetime
+
+
+# ── Input schemas ─────────────────────────────────────────────────────────────
+
+class UserIn(BaseModel):
+    email: str
+    password: str
+    is_superuser: bool = False
+
+
+class UserUpdate(BaseModel):
+    email: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_verified: Optional[bool] = None
+    is_superuser: Optional[bool] = None
+
+
+class ProfileUpdate(BaseModel):
+    display_name: Optional[str] = None
+    bio: Optional[str] = None
+    phone: Optional[str] = None
+    timezone: Optional[str] = None
+    locale: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+
+class MembershipIn(BaseModel):
+    tier: str
+    expires_at: Optional[datetime] = None
+
+
+class MembershipUpdate(BaseModel):
+    tier: Optional[str] = None
+    expires_at: Optional[datetime] = None
+    cancelled_at: Optional[datetime] = None

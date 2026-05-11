@@ -25,11 +25,14 @@ export default async function CouponsPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/ecommerce" className="text-blue-600 hover:underline text-sm">
-          ← Products
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Link href="/ecommerce" className="text-blue-600 hover:underline text-sm">← Products</Link>
+          <h1 className="text-2xl font-bold text-gray-900">Coupons</h1>
+        </div>
+        <Link href="/ecommerce/coupons/new" className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
+          + New Coupon
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Coupons</h1>
       </div>
       <div className="bg-white rounded-lg border border-gray-200">
         <DataTable
@@ -60,6 +63,15 @@ export default async function CouponsPage() {
                   </span>
                 );
               },
+            },
+            {
+              key: "actions",
+              header: "Actions",
+              render: (r) => (
+                <Link href={`/ecommerce/coupons/${r.id}/edit`} className="text-blue-600 hover:underline text-xs">
+                  Edit →
+                </Link>
+              ),
             },
           ]}
           rows={(coupons as unknown) as Record<string, unknown>[]}

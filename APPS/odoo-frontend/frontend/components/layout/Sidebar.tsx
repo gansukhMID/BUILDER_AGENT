@@ -16,6 +16,7 @@ const nav = [
       { label: "Locations", href: "/wms/locations" },
       { label: "Inventory", href: "/wms/inventory" },
       { label: "Pickings", href: "/wms/pickings" },
+      { label: "Picking Types", href: "/wms/picking-types" },
     ],
   },
   {
@@ -25,6 +26,8 @@ const nav = [
       { label: "Products", href: "/ecommerce" },
       { label: "Orders", href: "/ecommerce/orders" },
       { label: "Coupons", href: "/ecommerce/coupons" },
+      { label: "Categories", href: "/ecommerce/categories" },
+      { label: "Shipping", href: "/ecommerce/shipping-methods" },
     ],
   },
   {

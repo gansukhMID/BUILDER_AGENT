@@ -27,11 +27,10 @@ export default async function EcommercePage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Products</h1>
         <div className="flex gap-3">
-          <Link href="/ecommerce/orders" className="text-blue-600 hover:underline text-sm">
-            Orders →
-          </Link>
-          <Link href="/ecommerce/coupons" className="text-blue-600 hover:underline text-sm">
-            Coupons →
+          <Link href="/ecommerce/orders" className="text-blue-600 hover:underline text-sm">Orders →</Link>
+          <Link href="/ecommerce/coupons" className="text-blue-600 hover:underline text-sm">Coupons →</Link>
+          <Link href="/ecommerce/products/new" className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
+            + New Product
           </Link>
         </div>
       </div>
@@ -59,10 +58,10 @@ export default async function EcommercePage() {
               header: "Actions",
               render: (r) => (
                 <Link
-                  href="/ecommerce/orders"
+                  href={`/ecommerce/products/${r.id}/edit`}
                   className="text-blue-600 hover:underline text-xs"
                 >
-                  View Orders →
+                  Edit →
                 </Link>
               ),
             },

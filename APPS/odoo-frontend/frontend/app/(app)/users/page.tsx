@@ -33,7 +33,12 @@ export default async function UsersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Users</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Users</h1>
+        <Link href="/users/new" className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
+          + New User
+        </Link>
+      </div>
       <div className="bg-white rounded-lg border border-gray-200">
         <DataTable
           columns={[
@@ -61,12 +66,10 @@ export default async function UsersPage() {
               key: "actions",
               header: "Actions",
               render: (r) => (
-                <Link
-                  href={`/users/${r.id}`}
-                  className="text-blue-600 hover:underline text-xs"
-                >
-                  View →
-                </Link>
+                <div className="flex gap-3">
+                  <Link href={`/users/${r.id}`} className="text-blue-600 hover:underline text-xs">View →</Link>
+                  <Link href={`/users/${r.id}/edit`} className="text-gray-500 hover:underline text-xs">Edit</Link>
+                </div>
               ),
             },
           ]}
