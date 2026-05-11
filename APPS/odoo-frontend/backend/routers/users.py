@@ -17,6 +17,11 @@ from schemas.users import (
 router = APIRouter()
 
 
+@router.get("/health")
+def users_health():
+    return {"router": "users", "status": "ok"}
+
+
 @router.get("", response_model=List[UserOut])
 def list_users(db: Session = Depends(get_db)):
     return db.query(User).order_by(User.id).all()

@@ -24,6 +24,11 @@ from wms_core.models.move import Move
 router = APIRouter()
 
 
+@router.get("/health")
+def wms_health():
+    return {"router": "wms", "status": "ok"}
+
+
 @router.get("/warehouses", response_model=List[WarehouseOut])
 def list_warehouses(db: Session = Depends(get_db)):
     warehouses = db.query(Warehouse).all()
